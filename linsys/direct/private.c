@@ -5,7 +5,7 @@ static scs_float totalSolveTime;
 
 char * getLinSysMethod(Data * d, Priv * p) {
 	char * tmp = scs_malloc(sizeof(char) * 128);
-	sprintf(tmp, "sparse-direct, nnz in A = %li", (long) d->A->p[d->n]);
+	sprintf(tmp, "sparse-direct, nnz in A = %li", (long) d->A->d_p[d->n]);
 	return tmp;
 }
 
@@ -43,7 +43,7 @@ cs * formKKT(Data * d) {
 	cs * K_cs;
 	AMatrix * A = d->A;
 	/* I at top left */
-	const scs_int Anz = A->p[d->n];
+	const scs_int Anz = A->d_p[d->n];
 	const scs_int Knzmax = d->n + d->m + Anz;
 	cs * K = cs_spalloc(d->m + d->n, d->m + d->n, Knzmax, 1, 1);
 
@@ -63,10 +63,10 @@ cs * formKKT(Data * d) {
 	}
 	/* A^T at top right : CCS: */
 	for (j = 0; j < d->n; j++) {
-		for (k = A->p[j]; k < A->p[j + 1]; k++) {
-			K->p[kk] = A->i[k] + d->n;
+		for (k = A->d_p[j]; k < A->d_p[j + 1]; k++) {
+			K->p[kk] = A->d_i[k] + d->n;
 			K->i[kk] = j;
-			K->x[kk] = A->x[k];
+			K->x[kk] = A->d_x[k];
 			kk++;
 		}
 	}
@@ -194,12 +194,12 @@ void _accumByA(scs_int n, scs_float * Ax, scs_int * Ai, scs_int * Ap, const scs_
 
 void accumByAtrans(Data * d, Priv * p, const scs_float *x, scs_float *y) {
 	AMatrix * A = d->A;
-	_accumByAtrans(d->n, A->x, A->i, A->p, x, y);
+	_accumByAtrans(d->n, A->d_x, A->d_i, A->d_p, x, y);
 }
 
 void accumByA(Data * d, Priv * p, const scs_float *x, scs_float *y) {
 	AMatrix * A = d->A;
-	_accumByA(d->n, A->x, A->i, A->p, x, y);
+	_accumByA(d->n, A->d_x, A->d_i, A->d_p, x, y);
 }
 
 scs_int factorize(Data * d, Priv * p) {

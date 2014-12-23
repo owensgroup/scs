@@ -4,6 +4,9 @@
 #include "scs.h"
 #include "linsys/amatrix.h"
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 #define PI (3.141592654)
 #ifdef DLONG
 #ifdef _WIN64
@@ -62,10 +65,16 @@ void genRandomProbData(scs_int nnz, scs_int col_nnz, Data * d, Cone * k, Sol * o
 	/* temporary variables */
 	scs_float * z = scs_calloc(m, sizeof(scs_float));
 	scs_int i, j, r;
+    scs_float * Ax;
+    scs_int * Ai, * Ap;
 
-	A->i = scs_calloc(nnz, sizeof(scs_int));
-	A->p = scs_calloc((n + 1), sizeof(scs_int));
-	A->x = scs_calloc(nnz, sizeof(scs_float));
+	Ai = scs_calloc(nnz, sizeof(scs_int));
+	Ap = scs_calloc((n + 1), sizeof(scs_int));
+	Ax = scs_calloc(nnz, sizeof(scs_float));
+
+    cudaMalloc((void **)&A->d_i, sizeof(scs_int) * nnz);
+    cudaMalloc((void **)&A->d_p, sizeof(scs_int) * (n + 1));
+    cudaMalloc((void **)&A->d_x, sizeof(scs_float) * nnz);
 
 	/* y, s >= 0 and y'*s = 0 */
 	for (i = 0; i < m; i++) {
@@ -85,7 +94,7 @@ void genRandomProbData(scs_int nnz, scs_int col_nnz, Data * d, Cone * k, Sol * o
 	/* 	c = -A'*y
 	 b = A*x + s
 	 */
-	A->p[0] = 0;
+	Ap[0] = 0;
 	scs_printf("Generating random matrix:\n");
     /*
     TODO: this only works probabilistically, ok for low density matrices
@@ -96,17 +105,25 @@ void genRandomProbData(scs_int nnz, scs_int col_nnz, Data * d, Cone * k, Sol * o
 		}
 		for (r = 0; r < col_nnz; r++) { /* row index */
 			i = rand() % m; /* row */
-			A->x[r + j * col_nnz] = rand_scs_float();
-			A->i[r + j * col_nnz] = i;
+			Ax[r + j * col_nnz] = rand_scs_float();
+			Ai[r + j * col_nnz] = i;
 
-			b[i] += A->x[r + j * col_nnz] * x[j];
+			b[i] += Ax[r + j * col_nnz] * x[j];
 
-			c[j] -= A->x[r + j * col_nnz] * y[i];
+			c[j] -= Ax[r + j * col_nnz] * y[i];
 		}
-		A->p[j + 1] = (j + 1) * col_nnz;
+		Ap[j + 1] = (j + 1) * col_nnz;
 	}
+    cudaMemcpy(A->d_i, Ai, sizeof(scs_int) * nnz, cudaMemcpyHostToDevice);
+    cudaMemcpy(A->d_p, Ap, sizeof(scs_int) * (n + 1), cudaMemcpyHostToDevice);
+    cudaMemcpy(A->d_x, Ax, sizeof(scs_float) * nnz, cudaMemcpyHostToDevice);
+
+
 	scs_printf("done\n");
 	scs_free(z);
+    scs_free(Ai);
+    scs_free(Ap);
+    scs_free(Ax);
 }
 
 #endif

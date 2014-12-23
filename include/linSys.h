@@ -1,6 +1,9 @@
 #ifndef LINSYS_H_GUARD
 #define LINSYS_H_GUARD
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* YOUR LINEAR SYSTEM SOLVER MUST IMPLEMENT THESE METHODS AND PRIVATE_DATA STRUCT */
 
 /* private data structs (that you define) containing any necessary data to solve linear system, etc. */
@@ -38,4 +41,9 @@ void normalizeA(Data * d, Work * w, Cone * k);
 void unNormalizeA(Data *d, Work * w);
 /* to free the memory allocated in AMatrix */
 void freeAMatrix(AMatrix * A);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

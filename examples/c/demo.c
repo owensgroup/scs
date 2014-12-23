@@ -2,6 +2,9 @@
 #include "linsys/amatrix.h"
 #include "problemUtils.h"
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+
 #ifndef DEMO_PATH
 #define DEMO_PATH "examples/raw/demo_data"
 #endif
@@ -60,6 +63,8 @@ int main(int argc, char **argv) {
 	}
 	freeData(d, k);
 	freeSol(sol);
+
+    cudaDeviceReset();
 	return 0;
 }
 
@@ -69,6 +74,8 @@ scs_int read_in_data(FILE * fp, Data * d, Cone * k) {
 	char s[LEN64], *token;
 	scs_int i, Anz;
 	AMatrix * A;
+    scs_float * Ax;
+    scs_int * Ai, * Ap;
 	d->rho_x = RHOX;
 	d->warm_start = 0;
 	d->scale = 1;
@@ -130,22 +137,42 @@ scs_int read_in_data(FILE * fp, Data * d, Cone * k) {
 			return -1;
 	}
 	A = malloc(sizeof(AMatrix));
-	A->p = malloc(sizeof(scs_int) * (d->n + 1));
+    cudaMalloc((void **)&A->d_p, sizeof(scs_int) * (d->n + 1));
+	Ap = malloc(sizeof(scs_int) * (d->n + 1));
 	for (i = 0; i < d->n + 1; i++) {
-		if (fscanf(fp, INTRW, &A->p[i]) != 1)
+		if (fscanf(fp, INTRW, &Ap[i]) != 1)
 			return -1;
 	}
-	Anz = A->p[d->n];
-	A->i = malloc(sizeof(scs_int) * Anz);
+    cudaMemcpy(A->d_p, Ap, sizeof(scs_int) * (d->n + 1), cudaMemcpyHostToDevice);
+
+	Anz = Ap[d->n];
+    cudaMalloc((void **)&A->d_i, sizeof(scs_int) * Anz);
+	Ai = malloc(sizeof(scs_int) * Anz);
 	for (i = 0; i < Anz; i++) {
-		if (fscanf(fp, INTRW, &A->i[i]) != 1)
+		if (fscanf(fp, INTRW, &Ai[i]) != 1)
 			return -1;
 	}
-	A->x = malloc(sizeof(scs_float) * Anz);
+    cudaMemcpy(A->d_i, Ai, sizeof(scs_int) * Anz, cudaMemcpyHostToDevice);
+
+    cudaMalloc((void **)&A->d_x, sizeof(scs_float) * Anz);
+	Ax = malloc(sizeof(scs_float) * Anz);
 	for (i = 0; i < Anz; i++) {
-		if (fscanf(fp, FLOATRW, &A->x[i]) != 1)
+		if (fscanf(fp, FLOATRW, &Ax[i]) != 1)
 			return -1;
 	}
+    cudaMemcpy(A->d_x, Ax, sizeof(scs_float) * Anz, cudaMemcpyHostToDevice);
+
+    cudaMemcpy(Ax, A->d_x, sizeof(scs_float) * Anz, cudaMemcpyDeviceToHost);
+
+    for (i = 0; i < Anz; ++i) {
+      printf("Ax[%d] = %f\n", i, Ax[i]);
+    }
+
+
+    free(Ap);
+    free(Ai);
+    free(Ax);
+
 	d->A = A;
 	return 0;
 }

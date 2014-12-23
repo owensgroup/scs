@@ -1,5 +1,6 @@
 UNAME = $(shell uname -s)
 CC = gcc
+NVCC = nvcc
 
 ifneq (, $(findstring CYGWIN, $(UNAME)))
 ISWINDOWS := 1
@@ -29,6 +30,7 @@ CFLAGS = -g -Wall -pedantic -O3 -funroll-loops -Wstrict-prototypes -I. -Iinclude
 ifneq ($(ISWINDOWS), 1)
 CFLAGS += -fPIC
 endif
+NVCCFLAGS = -O3 -Xcompiler -fno-strict-aliasing -I. -Iinclude
 
 LINSYS = linsys
 DIRSRC = $(LINSYS)/direct
@@ -41,11 +43,14 @@ ARFLAGS = rv
 ARCHIVE = $(AR) $(ARFLAGS)
 RANLIB = ranlib
 
+CFLAGS += -I/usr/local/cuda/include -L/usr/local/cuda/lib
+LDFLAGS += -lcudart -lcusparse
+
 ########### OPTIONAL FLAGS ##########
 # CFLAGS += -DDLONG # use longs rather than ints
 # CFLAGS += -DFLOAT # use floats rather than doubles
 # CFLAGS += -DNOVALIDATE # remove data validation step
-# CFLAGS += -DEXTRAVERBOSE # extra verbosity level
+CFLAGS += -DEXTRAVERBOSE # extra verbosity level
 # CFLAGS += -DNOBLASUNDERSCORE # if your blas install does not use underscores in function names 
 
 ############ OPENMP: ############

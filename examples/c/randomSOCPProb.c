@@ -125,6 +125,7 @@ int main(int argc, char **argv) {
 	d->n = n;
 	genRandomProbData(nnz, col_nnz, d, k, opt_sol);
 	setDefaultParams(d);
+    d->normalize = 0;
 
 	scs_printf("true pri opt = %4f\n", innerProd(d->c, opt_sol->x, d->n));
 	scs_printf("true dua opt = %4f\n", -innerProd(d->b, opt_sol->y, d->m));

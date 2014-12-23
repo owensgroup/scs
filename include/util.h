@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include "cones.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* timing code courtesty of A. Domahidi */
 #if (defined _WIN32 || defined _WIN64 || defined _WINDLL)
 /* Use Windows QueryPerformanceCounter for timing */
@@ -48,5 +52,9 @@ void printArray(scs_float * arr, scs_int n, char * name);
 void setDefaultParams(Data * d);
 void freeSol(Sol * sol);
 void freeData(Data * d, Cone * k);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

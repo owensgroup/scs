@@ -33,7 +33,8 @@ src/cs.o	: src/cs.c include/cs.h
 src/linAlg.o: src/linAlg.c include/linAlg.h
 
 $(DIRSRC)/private.o: $(DIRSRC)/private.c  $(DIRSRC)/private.h
-$(INDIRSRC)/indirect/private.o: $(INDIRSRC)/private.c $(INDIRSRC)/private.h
+$(INDIRSRC)/private.o: $(INDIRSRC)/private.cu $(INDIRSRC)/private.h
+	$(NVCC) $(NVCCFLAGS) -g -c $< -o $@
 $(LINSYS)/common.o: $(LINSYS)/common.c $(LINSYS)/common.h
 
 $(OUT)/libscsdir.a: $(OBJECTS) $(DIRSRC)/private.o $(DIRECT_OBJECTS) $(LINSYS)/common.o
@@ -48,15 +49,15 @@ $(OUT)/libscsindir.a: $(OBJECTS) $(INDIRSRC)/private.o $(LINSYS)/common.o
 
 $(OUT)/libscsdir.$(SHARED): $(OBJECTS) $(DIRSRC)/private.o $(DIRECT_OBJECTS) $(LINSYS)/common.o
 	mkdir -p $(OUT)
-	$(CC) -shared -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS)
 
 $(OUT)/libscsindir.$(SHARED): $(OBJECTS) $(INDIRSRC)/private.o $(LINSYS)/common.o
 	mkdir -p $(OUT)
-	$(CC) -shared -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -shared -o $@ $^ $(LDFLAGS) 
 
 $(OUT)/demo_direct: examples/c/demo.c $(OUT)/libscsdir.a
 	mkdir -p $(OUT)
-	$(CC) $(CFLAGS) -DDEMO_PATH="\"$(CURDIR)/examples/raw/demo_data\"" $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) -DDEMO_PATH="\"$(CURDIR)/examples/raw/demo_data\"" $^ -o $@ $(LDFLAGS) 
 
 $(OUT)/demo_indirect: examples/c/demo.c $(OUT)/libscsindir.a
 	mkdir -p $(OUT)
