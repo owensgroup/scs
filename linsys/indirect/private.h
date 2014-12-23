@@ -16,7 +16,7 @@
 #define CUSPARSE(x) cusparse ## D ## x
 #else
 #define CUBLAS(x) cublas ## S ## x
-#define CUSPARSE(X) cusparse ## S ## x
+#define CUSPARSE(x) cusparse ## S ## x
 #endif
 
 struct PRIVATE_DATA {
